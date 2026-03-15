@@ -2,10 +2,10 @@
 <!DOCTYPE PLUGIN [
   <!ENTITY name "storcli-temp">
   <!ENTITY author "ecarry">
-  <!ENTITY version "0.2.0">
+  <!ENTITY version "0.2.1">
   <!ENTITY pluginURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/storcli-temp.plg">
   <!ENTITY packageURL "https://github.com/ecarry/unraid-storcli-temp-plugin/releases/download/v&version;/storcli-temp-package-&version;.txz">
-  <!ENTITY packageSHA256 "63cb8b06e166652736c0267884d5d1ed658f20f8e727a5b2505753e2304c5839">
+  <!ENTITY packageSHA256 "ecca4f78beab047b9d74ddcdae64489ab2b56413e8346aec567f604eb954ded9">
   <!ENTITY pluginLOC "/boot/config/plugins/&name;">
 ]>
 
@@ -13,6 +13,7 @@
   <CHANGES>
     <![CDATA[
 ### &version;
+- Safer uninstall script to avoid accidental deletion of system WebUI files
 - Multi-controller support
 - Dashboard tile table layout
     ]]>
@@ -52,9 +53,24 @@ echo ""
   <FILE Run="/bin/bash" Method="remove">
     <INLINE>
       <![CDATA[
-removepkg storcli-temp-package-&version; 2>/dev/null || true
-rm -rf &pluginLOC;
-rm -rf /usr/local/emhttp/plugins/&name;
+plugin_runtime="/usr/local/emhttp/plugins/&name;"
+plugin_loc="&pluginLOC;"
+
+case "$plugin_runtime" in
+  /usr/local/emhttp/plugins/*) ;;
+  *) echo "Refusing to remove unexpected runtime path: $plugin_runtime"; exit 1;;
+esac
+
+case "$plugin_loc" in
+  /boot/config/plugins/*) ;;
+  *) echo "Refusing to remove unexpected pluginLOC path: $plugin_loc"; exit 1;;
+esac
+
+for pkg in $(ls /var/log/packages 2>/dev/null | grep '^storcli-temp-package-'); do
+  removepkg "$pkg" 2>/dev/null || true
+done
+rm -rf "$plugin_loc"
+rm -rf "$plugin_runtime"
       ]]>
     </INLINE>
   </FILE>

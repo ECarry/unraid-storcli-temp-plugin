@@ -16,18 +16,18 @@ This repo follows the recommended packaging pattern from plugin-docs:
 ## Build (on Unraid or any system with `makepkg`)
 
 ```bash
-./pkg_build.sh 0.2.0
+./pkg_build.sh 0.2.1
 ```
 
 This generates:
 
-- `storcli-temp-package-0.2.0.txz`
+- `storcli-temp-package-0.2.1.txz`
 - a `SHA256:` line you must paste into `storcli-temp.plg` (`packageSHA256`)
 
 ## Release
 
-1. Create a GitHub Release tag: `v0.2.0`
-2. Upload `storcli-temp-package-0.2.0.txz` as a release asset
+1. Create a GitHub Release tag: `v0.2.1`
+2. Upload `storcli-temp-package-0.2.1.txz` as a release asset
 3. Update `storcli-temp.plg`:
 
 - `version` entity

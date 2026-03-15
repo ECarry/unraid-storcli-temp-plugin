@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-VERSION=${1:-"0.2.0"}
+VERSION=${1:-"0.2.1"}
 PKG_NAME="storcli-temp-package-${VERSION}"
 OUTDIR="${PWD}"
 OUTFILE="${OUTDIR}/${PKG_NAME}.txz"

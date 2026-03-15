@@ -2,10 +2,14 @@
 <!DOCTYPE PLUGIN [
   <!ENTITY name "storcli-temp">
   <!ENTITY author "ecarry">
-  <!ENTITY version "0.2.1">
+  <!ENTITY version "0.2.2">
   <!ENTITY pluginURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/storcli-temp.plg">
-  <!ENTITY packageURL "https://github.com/ecarry/unraid-storcli-temp-plugin/releases/download/v&version;/storcli-temp-package-&version;.txz">
-  <!ENTITY packageSHA256 "ecca4f78beab047b9d74ddcdae64489ab2b56413e8346aec567f604eb954ded9">
+  <!ENTITY tempURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/include/temperature.php">
+  <!ENTITY tempSHA256 "064032eb7fba922b9e799dc5f56ddac3d67b0cef121b728bbe09c54650cb368d">
+  <!ENTITY pageURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/storcli-temp-dashboard.page">
+  <!ENTITY pageSHA256 "cedbd5cee85c9d1a5a37498b394e5af3b32d03f113adad76b06df926a567a7d5">
+  <!ENTITY iconURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/icons/raid-card.svg">
+  <!ENTITY iconSHA256 "62cb77252525895a1add13e8d47698e83d9858ac45fe11d66ddcdef4b28cba82">
   <!ENTITY pluginLOC "/boot/config/plugins/&name;">
 ]>
 
@@ -13,7 +17,7 @@
   <CHANGES>
     <![CDATA[
 ### &version;
-- Safer uninstall script to avoid accidental deletion of system WebUI files
+- Switch back to safe file-based install (avoid txz/upgradepkg)
 - Multi-controller support
 - Dashboard tile table layout
     ]]>
@@ -24,15 +28,41 @@
     <INLINE>
       <![CDATA[
 mkdir -p &pluginLOC;
-rm -f $(ls &pluginLOC;/*.txz 2>/dev/null)
+mkdir -p &pluginLOC;/include
+mkdir -p &pluginLOC;/icons
+mkdir -p /usr/local/emhttp/plugins/&name;/include
+mkdir -p /usr/local/emhttp/plugins/&name;/icons
       ]]>
     </INLINE>
   </FILE>
 
-  <!-- INSTALL PACKAGE -->
-  <FILE Name="&pluginLOC;/storcli-temp-package-&version;.txz" Run="upgradepkg --install-new --reinstall">
-    <URL>&packageURL;</URL>
-    <SHA256>&packageSHA256;</SHA256>
+  <!-- Download plugin files to flash -->
+  <FILE Name="&pluginLOC;/include/temperature.php" Method="install">
+    <URL>&tempURL;</URL>
+    <SHA256>&tempSHA256;</SHA256>
+  </FILE>
+
+  <FILE Name="&pluginLOC;/storcli-temp-dashboard.page" Method="install">
+    <URL>&pageURL;</URL>
+    <SHA256>&pageSHA256;</SHA256>
+  </FILE>
+
+  <FILE Name="&pluginLOC;/icons/raid-card.svg" Method="install">
+    <URL>&iconURL;</URL>
+    <SHA256>&iconSHA256;</SHA256>
+  </FILE>
+
+  <!-- Copy from flash to runtime -->
+  <FILE Name="/usr/local/emhttp/plugins/&name;/include/temperature.php" Method="install">
+    <LOCAL>&pluginLOC;/include/temperature.php</LOCAL>
+  </FILE>
+
+  <FILE Name="/usr/local/emhttp/plugins/&name;/storcli-temp-dashboard.page" Method="install">
+    <LOCAL>&pluginLOC;/storcli-temp-dashboard.page</LOCAL>
+  </FILE>
+
+  <FILE Name="/usr/local/emhttp/plugins/&name;/icons/raid-card.svg" Method="install">
+    <LOCAL>&pluginLOC;/icons/raid-card.svg</LOCAL>
   </FILE>
 
   <!-- POST-INSTALL -->

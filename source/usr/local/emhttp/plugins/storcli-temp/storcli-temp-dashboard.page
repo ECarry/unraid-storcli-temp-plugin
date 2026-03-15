@@ -1,0 +1,150 @@
+Menu="Dashboard:0"
+---
+<?php
+$pluginname = "storcli-temp";
+
+$tile = '';
+$tile .= '<tbody title="_(Show StorCLI ROC temperature)_">';
+$tile .= '<tr><td>';
+$tile .= '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">';
+$tile .= '  <div style="display:flex;align-items:flex-start;gap:12px;">';
+$tile .= '    <div style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;">';
+$tile .= '      <img src="/plugins/storcli-temp/icons/raid-card.svg" style="width:34px;height:34px;opacity:0.95;" alt="RAID" />';
+$tile .= '    </div>';
+$tile .= '    <div>';
+$tile .= '      <div style="font-size:20px;font-weight:700;line-height:1.1;">StorCLI ROC Temp</div>';
+$tile .= '      <div id="storcli_temp_overall" style="margin-top:2px;color:#3a3;">_(Status: Running)_</div>';
+$tile .= '    </div>';
+$tile .= '  </div>';
+$tile .= '  <div style="display:flex;align-items:center;gap:8px;">';
+$tile .= '    <a href="#" id="storcli_temp_refresh" title="_(Refresh)_" style="text-decoration:none;">';
+$tile .= '      <i class="fa fa-refresh" style="font-size:18px;"></i>';
+$tile .= '    </a>';
+$tile .= '  </div>';
+$tile .= '</div>';
+$tile .= '</td></tr>';
+
+$tile .= '<tr><td>';
+$tile .= '<table style="width:100%;border-collapse:collapse;margin-top:10px;">';
+$tile .= '<thead><tr style="opacity:0.75;text-transform:uppercase;letter-spacing:0.08em;font-size:12px;">';
+$tile .= '<th style="text-align:left;padding:4px 0;">_(Name)_</th>';
+$tile .= '<th style="text-align:left;padding:4px 0;">_(Temp (Source))_</th>';
+$tile .= '<th style="text-align:left;padding:4px 0;">_(Status)_</th>';
+$tile .= '<th style="text-align:center;padding:4px 0;">_(Run)_</th>';
+$tile .= '</tr></thead>';
+$tile .= '<tbody id="storcli_temp_rows"></tbody>';
+$tile .= '</table>';
+$tile .= '<div style="margin-top:8px;opacity:0.75;" id="storcli_temp_time"></div>';
+$tile .= '</td></tr>';
+
+$tile .= '<script>
+(function(){
+  var endpoint = "/plugins/storcli-temp/include/temperature.php";
+
+  function esc(s){
+    return String(s)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/\"/g,"&quot;")
+      .replace(/\'/g,"&#39;");
+  }
+
+  function tempColorStyle(temp) {
+    if (temp === null || temp === undefined || Number.isNaN(temp)) return "";
+    if (temp >= 70) return "color:#d00;font-weight:700;";
+    if (temp >= 55) return "color:#d80;font-weight:700;";
+    return "color:#090;font-weight:700;";
+  }
+
+  function setOverall(ok, msg){
+    var el = document.getElementById("storcli_temp_overall");
+    if (!el) return;
+    if (ok) {
+      el.textContent = "Status: Running";
+      el.style.color = "#3a3";
+    } else {
+      el.textContent = msg || "Status: Error";
+      el.style.color = "#d00";
+    }
+  }
+
+  function renderRows(controllers) {
+    var rows = document.getElementById("storcli_temp_rows");
+    if (!rows) return;
+    rows.innerHTML = "";
+
+    (controllers || []).forEach(function(c){
+      var name = "c" + c.id;
+
+      var temp = (c.roc_c === null || c.roc_c === undefined) ? null : Number(c.roc_c);
+      var tempText = (temp === null || Number.isNaN(temp)) ? "N/A" : (temp + " °C");
+      var tempCell = "<span style=\"" + tempColorStyle(temp) + "\">" + esc(tempText) + "</span> <span style=\"opacity:0.7\">(ROC)</span>";
+
+      var status = "";
+      if (c.ok === false) status = "Error";
+      else status = "Support=" + (c.support_temp ? "Yes" : "No") + ", ROC Sensor=" + (c.sensor_roc || "Unknown");
+
+      var tr = document.createElement("tr");
+      tr.innerHTML = ""
+        + "<td style=\"padding:6px 0;\">" + esc(name) + "</td>"
+        + "<td style=\"padding:6px 0;\">" + tempCell + "</td>"
+        + "<td style=\"padding:6px 0;\">" + esc(status) + "</td>"
+        + "<td style=\"padding:6px 0;text-align:center;\">"
+        + "  <a href=\"#\" class=\"storcli_temp_run\" data-c=\"" + esc(c.id) + "\" title=\"Refresh\">"
+        + "    <i class=\"fa fa-refresh\" style=\"font-size:16px;\"></i>"
+        + "  </a>"
+        + "</td>";
+      rows.appendChild(tr);
+    });
+  }
+
+  async function refresh(singleController) {
+    try {
+      var url = endpoint + (singleController !== undefined ? ("?c=" + encodeURIComponent(singleController)) : "");
+      var r = await fetch(url, {cache: "no-store"});
+      var j = await r.json();
+      if (!j || !j.ok) {
+        setOverall(false, (j && j.message) ? j.message : "Status: Error");
+        renderRows([]);
+        return;
+      }
+
+      setOverall(true);
+      renderRows(j.controllers || []);
+
+      var t = document.getElementById("storcli_temp_time");
+      if (t) t.textContent = j.ts_local || "";
+    } catch (e) {
+      setOverall(false, "Status: fetch failed");
+      renderRows([]);
+    }
+  }
+
+  document.addEventListener("click", function(ev){
+    var a = ev.target.closest ? ev.target.closest("a") : null;
+    if (!a) return;
+
+    if (a.id === "storcli_temp_refresh") {
+      ev.preventDefault();
+      refresh();
+      return;
+    }
+
+    if (a.classList && a.classList.contains("storcli_temp_run")) {
+      ev.preventDefault();
+      var c = a.getAttribute("data-c");
+      refresh(c);
+      return;
+    }
+  });
+
+  refresh();
+  setInterval(refresh, 10000);
+})();
+</script>';
+
+$tile .= '</tbody>';
+
+$mytiles[$pluginname]['column1'] = $tile;
+?>

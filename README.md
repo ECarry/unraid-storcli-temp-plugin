@@ -1,74 +1,50 @@
 # storcli-temp (Unraid Plugin)
 
-Dashboard custom tile for displaying LSI/Avago/Broadcom RAID controller **ROC temperature** via `storcli`.
+Dashboard custom tile for displaying **StorCLI ROC temperature** (supports multiple controllers).
+
+This repo follows the recommended packaging pattern from plugin-docs:
+
+- `source/` contains files that will be installed under `/usr/local/emhttp/plugins/storcli-temp/`
+- `pkg_build.sh` builds a `.txz` Slackware package
+- `storcli-temp.plg` downloads the `.txz` from GitHub Releases and installs it via `upgradepkg`
 
 ## Requirements
 
 - Unraid `>= 6.11.9`
-- `storcli` available at:
-  - `/usr/local/bin/storcli`
+- `storcli` installed at `/usr/local/bin/storcli`
 
-## What it shows
+## Build (on Unraid or any system with `makepkg`)
 
-- ROC temperature in °C
-- Basic status (Support Temperature / ROC Sensor)
+```bash
+./pkg_build.sh 0.2.0
+```
 
-## Install
+This generates:
 
-### Install from GitHub (recommended for users)
+- `storcli-temp-package-0.2.0.txz`
+- a `SHA256:` line you must paste into `storcli-temp.plg` (`packageSHA256`)
 
-1. Edit `storcli-temp.plg` and replace:
+## Release
 
-- `YOUR_GITHUB_USER/YOUR_REPO`
-- `REPLACE_WITH_SHA256` (for both files)
+1. Create a GitHub Release tag: `v0.2.0`
+2. Upload `storcli-temp-package-0.2.0.txz` as a release asset
+3. Update `storcli-temp.plg`:
 
-2. Publish the repo.
+- `version` entity
+- `packageSHA256` entity
 
-3. In Unraid WebUI:
+## Install (users)
+
+In Unraid WebUI:
 
 - Plugins
 - Install Plugin
-- Paste this URL:
+- Paste:
 
-`https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_REPO/main/storcli-temp.plg`
-
-### Install locally (for development)
-
-Copy files to your flash:
-
-- `/boot/config/plugins/storcli-temp.plg`
-- `/boot/config/plugins/storcli-temp/include/temperature.php`
-- `/boot/config/plugins/storcli-temp/storcli-temp-dashboard.page`
-
-Then install:
-
-```bash
-/usr/local/sbin/plugin install /boot/config/plugins/storcli-temp.plg
-```
+`https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/storcli-temp.plg`
 
 ## Enable the Dashboard tile
 
-- Open Dashboard
-- Click **Content Manager**
-- Enable: `Show StorCLI ROC temperature (c0)`
-
-## Development notes
-
-- Runtime files live under:
-
-`/usr/local/emhttp/plugins/storcli-temp/`
-
-- Flash cached files live under:
-
-`/boot/config/plugins/storcli-temp/`
-
-## Release workflow (simple)
-
-Compute SHA256 for the two source files and paste into `storcli-temp.plg`:
-
-```bash
-sha256sum src/temperature.php
-sha256sum src/storcli-temp-dashboard.page
-```
-
-Then bump `version` in `storcli-temp.plg`.
+- Dashboard
+- Content Manager
+- Enable: `Show StorCLI ROC temperature`

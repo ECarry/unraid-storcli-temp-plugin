@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<PLUGIN
+  name="storcli-temp"
+  author="ecarry"
+  version="0.1.0"
+  min="6.11.9"
+  pluginURL="https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/storcli-temp.plg"
+>
+  <CHANGES>
+    <![CDATA[
+0.1.0 - Initial release.
+    ]]>
+  </CHANGES>
+
+  <FILE Run="/bin/bash" Method="install">
+    <INLINE>
+      <![CDATA[
+mkdir -p /boot/config/plugins/storcli-temp/include
+mkdir -p /usr/local/emhttp/plugins/storcli-temp/include
+      ]]>
+    </INLINE>
+  </FILE>
+
+  <!-- Download to flash (cached) -->
+  <FILE Name="/boot/config/plugins/storcli-temp/include/temperature.php" Method="install">
+    <URL>https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/src/temperature.php</URL>
+    <SHA256>54806c9011f57effef1bfce3191af505bc879282f4b2f37aec0346697f2fd4d1</SHA256>
+  </FILE>
+
+  <FILE Name="/boot/config/plugins/storcli-temp/storcli-temp-dashboard.page" Method="install">
+    <URL>https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/src/storcli-temp-dashboard.page</URL>
+    <SHA256>3a3b2f931d85aeca59a21f066806dc47f1ea0ef371a894d149bee1168da272d2</SHA256>
+  </FILE>
+
+  <!-- Copy from flash to runtime -->
+  <FILE Name="/usr/local/emhttp/plugins/storcli-temp/include/temperature.php" Method="install">
+    <LOCAL>/boot/config/plugins/storcli-temp/include/temperature.php</LOCAL>
+  </FILE>
+
+  <FILE Name="/usr/local/emhttp/plugins/storcli-temp/storcli-temp-dashboard.page" Method="install">
+    <LOCAL>/boot/config/plugins/storcli-temp/storcli-temp-dashboard.page</LOCAL>
+  </FILE>
+
+  <FILE Run="/bin/bash" Method="remove">
+    <INLINE>
+      <![CDATA[
+rm -rf /usr/local/emhttp/plugins/storcli-temp
+rm -f /boot/config/plugins/storcli-temp.plg
+      ]]>
+    </INLINE>
+  </FILE>
+</PLUGIN>

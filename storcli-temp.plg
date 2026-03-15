@@ -1,106 +1,51 @@
-<?xml version='1.0' standalone='yes'?>
-<!DOCTYPE PLUGIN [
-  <!ENTITY name "storcli-temp">
-  <!ENTITY author "ecarry">
-  <!ENTITY version "0.2.2">
-  <!ENTITY pluginURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/storcli-temp.plg">
-  <!ENTITY tempURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/include/temperature.php">
-  <!ENTITY tempSHA256 "064032eb7fba922b9e799dc5f56ddac3d67b0cef121b728bbe09c54650cb368d">
-  <!ENTITY pageURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/storcli-temp-dashboard.page">
-  <!ENTITY pageSHA256 "cedbd5cee85c9d1a5a37498b394e5af3b32d03f113adad76b06df926a567a7d5">
-  <!ENTITY iconURL "https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/icons/raid-card.svg">
-  <!ENTITY iconSHA256 "62cb77252525895a1add13e8d47698e83d9858ac45fe11d66ddcdef4b28cba82">
-  <!ENTITY pluginLOC "/boot/config/plugins/&name;">
-]>
-
-<PLUGIN name="&name;" author="&author;" version="&version;" pluginURL="&pluginURL;" icon="thermometer-half" min="6.11.9">
+<?xml version="1.0"?>
+<PLUGIN
+  name="storcli-temp"
+  author="ecarry"
+  version="0.1.0"
+  min="6.11.9"
+  pluginURL="https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/storcli-temp.plg"
+>
   <CHANGES>
     <![CDATA[
-### &version;
-- Switch back to safe file-based install (avoid txz/upgradepkg)
-- Multi-controller support
-- Dashboard tile table layout
+0.1.0 - Initial release.
     ]]>
   </CHANGES>
 
-  <!-- PRE-INSTALL -->
-  <FILE Run="/bin/bash">
+  <FILE Run="/bin/bash" Method="install">
     <INLINE>
       <![CDATA[
-mkdir -p &pluginLOC;
-mkdir -p &pluginLOC;/include
-mkdir -p &pluginLOC;/icons
-mkdir -p /usr/local/emhttp/plugins/&name;/include
-mkdir -p /usr/local/emhttp/plugins/&name;/icons
+mkdir -p /boot/config/plugins/storcli-temp/include
+mkdir -p /usr/local/emhttp/plugins/storcli-temp/include
       ]]>
     </INLINE>
   </FILE>
 
-  <!-- Download plugin files to flash -->
-  <FILE Name="&pluginLOC;/include/temperature.php" Method="install">
-    <URL>&tempURL;</URL>
-    <SHA256>&tempSHA256;</SHA256>
+  <!-- Download to flash (cached) -->
+  <FILE Name="/boot/config/plugins/storcli-temp/include/temperature.php" Method="install">
+    <URL>https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/include/temperature.php</URL>
+    <SHA256>51de6651b057e166c589490830a400a97f0cef185467797a388e929bf4969876</SHA256>
   </FILE>
 
-  <FILE Name="&pluginLOC;/storcli-temp-dashboard.page" Method="install">
-    <URL>&pageURL;</URL>
-    <SHA256>&pageSHA256;</SHA256>
-  </FILE>
-
-  <FILE Name="&pluginLOC;/icons/raid-card.svg" Method="install">
-    <URL>&iconURL;</URL>
-    <SHA256>&iconSHA256;</SHA256>
+  <FILE Name="/boot/config/plugins/storcli-temp/storcli-temp-dashboard.page" Method="install">
+    <URL>https://raw.githubusercontent.com/ecarry/unraid-storcli-temp-plugin/main/source/usr/local/emhttp/plugins/storcli-temp/storcli-temp-dashboard.page</URL>
+    <SHA256>62d50c5bb4b7a971f13c51acd71469cdf4b482d3bb54fda6c123599c833b33de</SHA256>
   </FILE>
 
   <!-- Copy from flash to runtime -->
-  <FILE Name="/usr/local/emhttp/plugins/&name;/include/temperature.php" Method="install">
-    <LOCAL>&pluginLOC;/include/temperature.php</LOCAL>
+  <FILE Name="/usr/local/emhttp/plugins/storcli-temp/include/temperature.php" Method="install">
+    <LOCAL>/boot/config/plugins/storcli-temp/include/temperature.php</LOCAL>
   </FILE>
 
-  <FILE Name="/usr/local/emhttp/plugins/&name;/storcli-temp-dashboard.page" Method="install">
-    <LOCAL>&pluginLOC;/storcli-temp-dashboard.page</LOCAL>
+  <FILE Name="/usr/local/emhttp/plugins/storcli-temp/storcli-temp-dashboard.page" Method="install">
+    <LOCAL>/boot/config/plugins/storcli-temp/storcli-temp-dashboard.page</LOCAL>
   </FILE>
 
-  <FILE Name="/usr/local/emhttp/plugins/&name;/icons/raid-card.svg" Method="install">
-    <LOCAL>&pluginLOC;/icons/raid-card.svg</LOCAL>
-  </FILE>
-
-  <!-- POST-INSTALL -->
-  <FILE Run="/bin/bash">
-    <INLINE>
-      <![CDATA[
-echo ""
-echo "-------------------------------------------"
-echo " &name; has been installed."
-echo " Version: &version;"
-echo "-------------------------------------------"
-echo ""
-      ]]>
-    </INLINE>
-  </FILE>
-
-  <!-- REMOVE -->
   <FILE Run="/bin/bash" Method="remove">
     <INLINE>
       <![CDATA[
-plugin_runtime="/usr/local/emhttp/plugins/&name;"
-plugin_loc="&pluginLOC;"
-
-case "$plugin_runtime" in
-  /usr/local/emhttp/plugins/*) ;;
-  *) echo "Refusing to remove unexpected runtime path: $plugin_runtime"; exit 1;;
-esac
-
-case "$plugin_loc" in
-  /boot/config/plugins/*) ;;
-  *) echo "Refusing to remove unexpected pluginLOC path: $plugin_loc"; exit 1;;
-esac
-
-for pkg in $(ls /var/log/packages 2>/dev/null | grep '^storcli-temp-package-'); do
-  removepkg "$pkg" 2>/dev/null || true
-done
-rm -rf "$plugin_loc"
-rm -rf "$plugin_runtime"
+rm -rf /usr/local/emhttp/plugins/storcli-temp
+rm -f /boot/config/plugins/storcli-temp.plg
       ]]>
     </INLINE>
   </FILE>

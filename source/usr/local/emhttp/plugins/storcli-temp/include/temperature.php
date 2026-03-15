@@ -13,80 +13,38 @@ function matchValue($text, $pattern) {
   return null;
 }
 
-function execText($cmd, &$rc) {
-  $out = [];
-  $rc = 0;
-  exec($cmd, $out, $rc);
-  return implode("\n", $out);
-}
+$c = isset($_GET['c']) ? $_GET['c'] : '0';
+if (!preg_match('/^\d+$/', (string)$c)) $c = '0';
 
 $storcli = '/usr/local/bin/storcli';
 if (!is_executable($storcli)) {
   respond(['ok' => false, 'message' => 'storcli not found at /usr/local/bin/storcli'], 500);
 }
 
-function getControllers($storcli) {
-  $rc = 0;
-  $text = execText($storcli . ' show 2>&1', $rc);
-  if ($rc !== 0) return [0];
+$cmd = $storcli . ' /c' . $c . ' show all 2>&1';
+$out = [];
+$rc = 0;
+exec($cmd, $out, $rc);
+$text = implode("\n", $out);
 
-  $matches = [];
-  if (preg_match_all('/\/(?:c|C)(\d+)/', $text, $matches)) {
-    $ids = array_map('intval', $matches[1]);
-    $ids = array_values(array_unique($ids));
-    sort($ids);
-    if (count($ids) > 0) return $ids;
-  }
-
-  return [0];
+if ($rc !== 0) {
+  respond(['ok' => false, 'message' => 'storcli failed', 'rc' => $rc, 'output' => $text], 500);
 }
 
-function readController($storcli, $c) {
-  $rc = 0;
-  $text = execText($storcli . ' /c' . $c . ' show all 2>&1', $rc);
-  if ($rc !== 0) {
-    return [
-      'id' => (int)$c,
-      'ok' => false,
-      'message' => 'storcli failed',
-      'rc' => $rc,
-    ];
-  }
-
-  $support = matchValue($text, '/^Support Temperature\s*=\s*(Yes|No)\s*$/mi');
-  $sensorRoc = matchValue($text, '/^Temperature Sensor for ROC\s*=\s*([A-Za-z]+)\s*$/mi');
-  $sensorCtl = matchValue($text, '/^Temperature Sensor for Controller\s*=\s*([A-Za-z]+)\s*$/mi');
-  $rocTemp = matchValue($text, '/^ROC temperature\(Degree Celsius\)\s*=\s*([0-9]+)\s*$/mi');
-  $rocTemp = ($rocTemp === null) ? null : (int)$rocTemp;
-
-  return [
-    'id' => (int)$c,
-    'ok' => true,
-    'roc_c' => $rocTemp,
-    'support_temp' => ($support === 'Yes'),
-    'sensor_roc' => $sensorRoc,
-    'sensor_controller' => $sensorCtl,
-  ];
-}
-
-$cParam = isset($_GET['c']) ? $_GET['c'] : null;
-
-$controllers = [];
-if ($cParam !== null && preg_match('/^\d+$/', (string)$cParam)) {
-  $controllers = [(int)$cParam];
-} else {
-  $controllers = getControllers($storcli);
-}
-
-$results = [];
-foreach ($controllers as $c) {
-  $results[] = readController($storcli, $c);
-}
+$support = matchValue($text, '/^Support Temperature\s*=\s*(Yes|No)\s*$/mi');
+$sensorRoc = matchValue($text, '/^Temperature Sensor for ROC\s*=\s*([A-Za-z]+)\s*$/mi');
+$sensorCtl = matchValue($text, '/^Temperature Sensor for Controller\s*=\s*([A-Za-z]+)\s*$/mi');
+$rocTemp = matchValue($text, '/^ROC temperature\(Degree Celsius\)\s*=\s*([0-9]+)\s*$/mi');
+$rocTemp = ($rocTemp === null) ? null : (int)$rocTemp;
 
 $now = time();
 respond([
   'ok' => true,
-  'controllers' => $results,
+  'controller' => (int)$c,
+  'roc_c' => $rocTemp,
+  'support_temp' => ($support === 'Yes'),
+  'sensor_roc' => $sensorRoc,
+  'sensor_controller' => $sensorCtl,
   'ts' => $now,
   'ts_local' => date('Y-m-d H:i:s', $now),
 ]);
